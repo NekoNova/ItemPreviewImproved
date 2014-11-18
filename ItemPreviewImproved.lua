@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------------------------
--- Client Lua Script for ItemPreviewImproved2
+-- Client Lua Script for ItemPreviewImprovedEx
 -- Copyright (c) NCsoft. All rights reserved
 -----------------------------------------------------------------------------------------------
  
@@ -9,7 +9,7 @@ require "HousingLib"
 require "Item"
  
 -----------------------------------------------------------------------------------------------
--- ItemPreviewImproved Module Definition
+-- ItemPreviewImprovedEx Module Definition
 -----------------------------------------------------------------------------------------------
 local ItemPreviewImproved = {} 
  
