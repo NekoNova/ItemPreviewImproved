@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Addon Author="Tenpi" APIVersion="9" Name="ItemPreviewImprovedEx" Description="Enables item preview of every armor type in one window" Version="1.0.0">
+	<!-- Libraries -->
+	<Script Name="lib\GeminiAddon\GeminiAddon.lua"/>
+	<Script Name="lib\GeminiHook\GeminiHook-1.0.lua"/>
+	<Script Name="lib\LibApolloFixes\LibApolloFixes-1.0.lua"/>
+	<Script Name="lib\GeminiLocale\GeminiLocale.lua"/>
+	<!-- Data Sources -->
+	<Script Name="tables\FABKits.lua"/>
+	<Script Name="tables\Mounts.lua"/>
+	<Script Name="tables\EN.lua"/>
+    <Script Name="tables\FR.lua"/>
+    <Script Name="tables\DE.lua"/>
+	<!-- Main -->
+    <Script Name="ItemPreviewImproved.lua"/>
+	<!-- GUI -->
+    <Form Name="ItemPreviewImproved.xml"/>
+	<!-- Replace SpaceStash Preview -->
+	<ReplaceAddon Name="ItemPreview"/>
+</Addon>
