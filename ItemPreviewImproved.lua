@@ -354,7 +354,6 @@ function ItemPreviewImproved:OnDocLoaded()
    	    Apollo.RegisterEventHandler("ShowItemInDressingRoom", "DelayTimer", self)
 		Apollo.RegisterEventHandler("AppearanceChanged", "OnAppearanceChanged", self)
 		Apollo.RegisterEventHandler("GenericEvent_InitializeSchematicsTree", "OnSchematicsInitialize", self)
-		
 		Apollo.RegisterEventHandler("DecorPreviewOpen", "OnOpenPreviewDecor", self)
 		Apollo.RegisterEventHandler("DecorPreviewClose", "OnCloseDecorPreviewWindow", self)
 		
@@ -1298,7 +1297,7 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 	
 	local nLeft, nTop, nRight, nBottom = self.wndMain:FindChild("CostumeBtnHolder"):GetAnchorOffsets()
 	self.wndMain:FindChild("CostumeBtnHolder"):SetAnchorOffsets(nLeft, nBottom - (75 + 28 * self.nCostumeCount), nRight, nBottom)
-	
+	self:DelayTimer()
 	self.wndMain:Show(true)
 end
 
@@ -1930,10 +1929,8 @@ function ItemPreviewImproved:OnOpenPreviewDecor(idDecorInfo)
 			decorPreviewAddon.wndMain:Show(false)
 			decorPreviewAddon.wndMain:Destroy()
 		end
-	else
-		self:DelayTimer()
 	end
-
+	self:DelayTimer()
     self.wndDecorPreview:Show(true)
     self.idDecorInfo = idDecorInfo
     self:ShowDecorPreviewWindow()
