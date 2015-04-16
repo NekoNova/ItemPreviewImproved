@@ -241,15 +241,12 @@ function ItemPreviewImproved:OnRestore(eLevel,tSavedData)
 		self.wndDecorPreview:SetAnchorOffsets(tPosDecor.l, tPosDecor.t, tPosDecor.r, tPosDecor.b)
 	end
 end 
- 
-
- 
 
 -----------------------------------------------------------------------------------------------
 -- ItemPreviewImproved OnLoad
 -----------------------------------------------------------------------------------------------
 function ItemPreviewImproved:OnLoad()
-    -- load our form file
+  -- load our form file
 	local GeminiHook = Apollo.GetPackage("Gemini:Hook-1.0").tPackage
 	tAddonNames = Apollo.GetAddons()
 	GeminiHook:Embed(self)
@@ -332,18 +329,201 @@ function ItemPreviewImproved:OnLoad()
 	self.wndDyeListContainer:Show(false)
 end
 
+function ItemPreviewImproved:ConfigureChallengePreviewAddon()
+  for key,val in pairs(suppChallenges) do
+    ChallengeAddon = Apollo.GetAddon(val)
+    
+    if ChallengeAddon ~= nil then break end
+  end
+    
+  if ChallengeAddon == nil then
+    ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Challenge addon! \nPlease contact the author of the addon via Curse!")
+  else
+    self:RawHook(ChallengeAddon, "OnIconBlockerClick")
+    self:PostHook(ChallengeAddon, "OnGenerateTooltip")
+  end
+end
+
+function ItemPreviewImproved:ConfigureRollPreviewAddon()
+  for key,val in pairs(suppRolls) do
+    RollAddon = Apollo.GetAddon(val)
+    
+    if RollAddon ~= nil then
+      RollName = val
+      break
+    end
+  end
+    
+  if RollAddon == nil then
+    ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported NeedVsGreed (Roll) addon! \nPlease contact the author of the addon via Curse!")
+  else
+    self:PostHook(RollAddon, "DrawLoot")
+    RollAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
+                                  if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+                                    if wndHandler:GetData():GetHousingDecorInfoId() ~= nil and wndHandler:GetData():GetHousingDecorInfoId() ~= 0 then
+                                      Event_FireGenericEvent("DecorPreviewOpen", wndHandler:GetData():GetHousingDecorInfoId())
+                                      return
+                                    else
+                                      self:OnShowItemInDressingRoom(wndHandler:GetData())
+                                      return
+                                    end   
+                                  end
+                                end
+  end
+end
+
+function ItemPreviewImproved:ConfigureMountPreviewAddon()
+  for key,val in pairs(suppVendors) do
+    VendorAddon = Apollo.GetAddon(val)
+    if VendorAddon ~= nil then break end
+  end
+    
+  if VendorAddon == nil then
+    ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Vendor addon! \nPlease contact the author of the addon via Curse!")
+  else
+    self:Hook(VendorAddon, "OnVendorListItemMouseDown")
+  end
+end
+
+function ItemPreviewImproved:ConfigureAuctionHouseAddon()
+  for key,val in pairs(suppAuctionHouse) do
+    AuctionHouseAddon = Apollo.GetAddon(val)
+      
+    if val == "EZAuction" then
+      -- Do not nothing in case of EZAuction
+    else
+      ktTimeRemaining =
+        {
+          [ItemAuction.CodeEnumAuctionRemaining.Expiring]   = Apollo.GetString("MarketplaceAuction_Expiring"),
+          [ItemAuction.CodeEnumAuctionRemaining.LessThanHour] = Apollo.GetString("MarketplaceAuction_LessThanHour"),
+          [ItemAuction.CodeEnumAuctionRemaining.Short]    = Apollo.GetString("MarketplaceAuction_Short"),
+          [ItemAuction.CodeEnumAuctionRemaining.Long]     = Apollo.GetString("MarketplaceAuction_Long"),
+          --[ItemAuction.CodeEnumAuctionRemaining.Very_Long]  = Apollo.GetString("MarketplaceAuction_VeryLong") -- Uses string weasel to stick a number in
+        }
+    end
+    
+    if AuctionHouseAddon ~= nil then break end
+  end
+    
+  if AuctionHouseAddon == nil then
+   ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Auctionhouse addon! \nPlease contact the author of the addon via Curse!")
+  else
+    self:RawHook(AuctionHouseAddon, "BuildListItem")
+      
+    AuctionHouseAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
+                                            local aucCurr = wndHandler:GetData()
+                                            local itemCurr = aucCurr:GetItem()
+                                            if not itemCurr then
+                                              return
+                                            end
+                                            if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+                                              if itemCurr:GetHousingDecorInfoId() ~= nil and itemCurr:GetHousingDecorInfoId() ~= 0 then
+                                                  Event_FireGenericEvent("DecorPreviewOpen", itemCurr:GetHousingDecorInfoId())
+                                                else
+                                                  self:OnShowItemInDressingRoom(itemCurr)       
+                                              end
+                                            end
+                                          end
+    
+  end
+end
+
+function ItemPreviewImproved:ConfigureTradeskillAddon()
+  for key,val in pairs(suppTechtree) do
+    TechtreeAddon = Apollo.GetAddon(val)
+    
+    if TechtreeAddon ~= nil then break end
+  end
+    
+  if TechtreeAddon == nil then
+   ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Tradeskills addon! \nPlease contact the author of the addon via Curse!")
+  else
+   self:PostHook(TechtreeAddon, "HelperBuildItemTooltip")
+   TechtreeAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
+                                    if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+                                      if wndHandler:GetData():GetHousingDecorInfoId() ~= nil and wndHandler:GetData():GetHousingDecorInfoId() ~= 0 then
+                                        Event_FireGenericEvent("DecorPreviewOpen", wndHandler:GetData():GetHousingDecorInfoId())
+                                        return
+                                      else
+                                        self:OnShowItemInDressingRoom(wndHandler:GetData())
+                                        return
+                                      end   
+                                    end
+                                  end
+        
+  end
+end
+
+function ItemPreviewImproved:ConfigueQuestRewardAddon()
+  for key,val in pairs(suppDialogs) do
+    DialogAddon = Apollo.GetAddon(val)
+    if DialogAddon ~= nil then break end
+  end
+
+  if(DialogAddon == nil) then
+   ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Dialog addon! \nPlease contact the author of the addon via Curse!")
+  elseif (DialogAddon.HelperBuildItemTooltip == nil) then
+    self:PostHook(DialogAddon, "OnGenerateTooltip")
+    DialogAddon.OnLootItemMouseUp = function (luaCaller, wndHandler, wndControl, eMouseButton)      
+                                      if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+                                       self:OnShowItemInDressingRoom(wndHandler:GetData())
+                                      end
+    end
+  else
+    self:PostHook(DialogAddon, "HelperBuildItemTooltip")  
+    DialogAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
+        if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+          self:OnShowItemInDressingRoom(wndHandler:GetData())
+        end
+    end
+  end
+end
+
+function ItemPreviewImproved:ConfigureQuestLogAddon()
+  for key,val in pairs(suppQuestlogs) do
+    QuestLogAddon = Apollo.GetAddon(val)
+    
+    if QuestLogAddon ~= nil then break end
+  end
+    
+  if QuestLogAddon == nil then
+   ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported QuestLog addon! \nPlease contact the author of the addon via Curse!") 
+  else  
+    self:PostHook(QuestLogAddon, "HelperBuildRewardsRec") 
+    QuestLogAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
+                                      if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+                                          self:OnShowItemInDressingRoom(wndHandler:GetData())
+                                      end
+                                    end
+  end
+end
+
+function ItemPreviewImproved:ConfigureChatLinkAddon()
+  for key,val in pairs(suppChats) do
+    ChatAddon = Apollo.GetAddon(val["name"])
+    
+    if ChatAddon ~= nil then
+      ChatAddonXML = val["xml"]
+      ChatAddonName = val["name"]
+      break
+    end
+  end
+    
+  if ChatAddon == nil then
+    ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported ChatLog addon! \nPlease contact the author of the addon via Curse!")
+  else
+    self:PostHook(ChatAddon, "OnNodeClick")
+  end
+end
+
 -----------------------------------------------------------------------------------------------
 -- ItemPreviewImproved OnDocLoaded
 -----------------------------------------------------------------------------------------------
 function ItemPreviewImproved:OnDocLoaded()
   if self.xmlDoc == nil then return end
-	self.wndMain:Show(false, true)
 	
-	-- if the xmlDoc is no longer needed, you should set it to nil
-	-- self.xmlDoc = nil
-		
-	-- Register handlers for events, slash commands and timer, etc.
-	-- e.g. Apollo.RegisterEventHandler("KeyDown", "OnKeyDown", self)
+	self.wndMain:Show(false, true)
+
 	Apollo.RegisterEventHandler("ShowItemInDressingRoom", "OnShowItemInDressingRoom", self)
   Apollo.RegisterEventHandler("ShowItemInDressingRoom", "DelayTimer", self)
 	Apollo.RegisterEventHandler("AppearanceChanged", "OnAppearanceChanged", self)
@@ -370,221 +550,34 @@ function ItemPreviewImproved:OnDocLoaded()
 	
 	wndMainResized = false
 				
-  ---------------------------------------------------------------------------
-  -- Challenge Preview Configuration
-  ---------------------------------------------------------------------------
-	for key,val in pairs(suppChallenges) do
-    ChallengeAddon = Apollo.GetAddon(val)
-		
-		if ChallengeAddon ~= nil then break end
-	end
-		
-	if ChallengeAddon == nil then
-  	ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Challenge addon! \nPlease contact the author of the addon via Curse!")
-	else
-		self:RawHook(ChallengeAddon, "OnIconBlockerClick")
-		self:PostHook(ChallengeAddon, "OnGenerateTooltip")
-	end
-
-  ---------------------------------------------------------------------------
-  -- Roll Preview Initialization
-  ---------------------------------------------------------------------------
-	for key,val in pairs(suppRolls) do
-	 RollAddon = Apollo.GetAddon(val)
-		
-		if RollAddon ~= nil then
-			RollName = val
-			break
-		end
-	end
-		
-	if RollAddon == nil then
-		ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported NeedVsGreed (Roll) addon! \nPlease contact the author of the addon via Curse!")
-	else
-		self:PostHook(RollAddon, "DrawLoot")
-		RollAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
-                              		if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-                                		if wndHandler:GetData():GetHousingDecorInfoId() ~= nil and wndHandler:GetData():GetHousingDecorInfoId() ~= 0 then
-                                			Event_FireGenericEvent("DecorPreviewOpen", wndHandler:GetData():GetHousingDecorInfoId())
-                              				return
-                              			else
-                              				self:OnShowItemInDressingRoom(wndHandler:GetData())
-                              				return
-                              			end		
-                              		end
-                              	end
-  end
-		
-		
-  ---------------------------------------------------------------------------
-  -- Mount/FABkit Preview Initialization
-  ---------------------------------------------------------------------------
-	for key,val in pairs(suppVendors) do
-    VendorAddon = Apollo.GetAddon(val)
-		
-    if VendorAddon ~= nil then break end
-	end
-		
-	if VendorAddon == nil then
-	 ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Vendor addon! \nPlease contact the author of the addon via Curse!")
-	else
-		self:Hook(VendorAddon, "OnVendorListItemMouseDown")
-	end
-		
-  ---------------------------------------------------------------------------
-  -- AuctionHouse Initialization
-  ---------------------------------------------------------------------------
-	for key,val in pairs(suppAuctionHouse) do
-    AuctionHouseAddon = Apollo.GetAddon(val)
-			
-		if val == "EZAuction" then
-			-- Do not nothing in case of EZAuction
-		else
-		  ktTimeRemaining =
-				{
-					[ItemAuction.CodeEnumAuctionRemaining.Expiring]		= Apollo.GetString("MarketplaceAuction_Expiring"),
-					[ItemAuction.CodeEnumAuctionRemaining.LessThanHour]	= Apollo.GetString("MarketplaceAuction_LessThanHour"),
-					[ItemAuction.CodeEnumAuctionRemaining.Short]		= Apollo.GetString("MarketplaceAuction_Short"),
-					[ItemAuction.CodeEnumAuctionRemaining.Long]			= Apollo.GetString("MarketplaceAuction_Long"),
-					--[ItemAuction.CodeEnumAuctionRemaining.Very_Long]	= Apollo.GetString("MarketplaceAuction_VeryLong") -- Uses string weasel to stick a number in
-				}
-		end
-		
-	  if AuctionHouseAddon ~= nil then break end
-	end
-		
-	if AuctionHouseAddon == nil then
-	 ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Auctionhouse addon! \nPlease contact the author of the addon via Curse!")
-	else
-		self:RawHook(AuctionHouseAddon, "BuildListItem")
-			
-		AuctionHouseAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
-                                      			local aucCurr = wndHandler:GetData()
-                                      			local itemCurr = aucCurr:GetItem()
-                                      			if not itemCurr then
-                                      				return
-                                      			end
-                                      			if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-                                      				if itemCurr:GetHousingDecorInfoId() ~= nil and itemCurr:GetHousingDecorInfoId() ~= 0 then
-                                      						Event_FireGenericEvent("DecorPreviewOpen", itemCurr:GetHousingDecorInfoId())
-                                      					else
-                                      						self:OnShowItemInDressingRoom(itemCurr)				
-                                      				end
-                                      			end
-                                      		end
-		
-  end
-
-  ---------------------------------------------------------------------------
-  -- Tradeskills Initialization
-  ---------------------------------------------------------------------------
-	for key,val in pairs(suppTechtree) do
-    TechtreeAddon = Apollo.GetAddon(val)
-		
-    if TechtreeAddon ~= nil then break end
-	end
-		
-	if TechtreeAddon == nil then
-	 ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Tradeskills addon! \nPlease contact the author of the addon via Curse!")
-	else
-	 self:PostHook(TechtreeAddon, "HelperBuildItemTooltip")
-	 TechtreeAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
-				                            if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-                                      if wndHandler:GetData():GetHousingDecorInfoId() ~= nil and wndHandler:GetData():GetHousingDecorInfoId() ~= 0 then
-						                            Event_FireGenericEvent("DecorPreviewOpen", wndHandler:GetData():GetHousingDecorInfoId())
-						                            return
-					                            else
-						                            self:OnShowItemInDressingRoom(wndHandler:GetData())
-						                            return
-					                            end		
-        		                        end
-		                              end
-				
-	end
-  ---------------------------------------------------------------------------
-  -- Quest Rewards Initialization
-  ---------------------------------------------------------------------------
-	for key,val in pairs(suppDialogs) do
-		DialogAddon = Apollo.GetAddon(val)
-		if DialogAddon ~= nil then break end
-	end
-
-	if(DialogAddon == nil) then
-	 ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Dialog addon! \nPlease contact the author of the addon via Curse!")
-	elseif (DialogAddon.HelperBuildItemTooltip == nil) then
-    self:PostHook(DialogAddon, "OnGenerateTooltip")
-		DialogAddon.OnLootItemMouseUp = function (luaCaller, wndHandler, wndControl, eMouseButton)			
-                                  		if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-                                  		 self:OnShowItemInDressingRoom(wndHandler:GetData())
-                                  		end
-	  end
-	else
-  	self:PostHook(DialogAddon, "HelperBuildItemTooltip")	
-  	DialogAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
-  			if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-  				self:OnShowItemInDressingRoom(wndHandler:GetData())
-    		end
-  	end
-	end
-		
-  ---------------------------------------------------------------------------
-  -- QuestLog Initialization
-  ---------------------------------------------------------------------------
-  for key,val in pairs(suppQuestlogs) do
-  	QuestLogAddon = Apollo.GetAddon(val)
-  	
-  	if QuestLogAddon ~= nil then break end
-  end
-		
-	if QuestLogAddon == nil then
-	 ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported QuestLog addon! \nPlease contact the author of the addon via Curse!")	
-	else	
-		self:PostHook(QuestLogAddon, "HelperBuildRewardsRec")	
-		QuestLogAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
-                                			if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-                                					self:OnShowItemInDressingRoom(wndHandler:GetData())
-                                  		end
-                                		end
-	end
-
-  ---------------------------------------------------------------------------
-  -- ChatLinks Initialization
-  ---------------------------------------------------------------------------
-  for key,val in pairs(suppChats) do
-  	ChatAddon = Apollo.GetAddon(val["name"])
-  	
-  	if ChatAddon ~= nil then
-  		ChatAddonXML = val["xml"]
-  		ChatAddonName = val["name"]
-  		break
-  	end
-  end
-		
-	if ChatAddon == nil then
-		ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported ChatLog addon! \nPlease contact the author of the addon via Curse!")
-	else
-		self:PostHook(ChatAddon, "OnNodeClick")
-	end
+  self:ConfigureChallengePreviewAddon()
+  self:ConfigureRollPreviewAddon()
+  self:ConfigureMountPreviewAddon()
+	self:ConfigureAuctionHouseAddon()
+	self:ConfigureTradeskillAddon()
+	self:ConfigueQuestRewardAddon()
+	self:ConfigureQuestLogAddon()
+	self:ConfigureChatLinkAddon()
 end
 
 -----------------------------------------------------------------------------------------------
 -- ItemPreviewImproved Functions
 -----------------------------------------------------------------------------------------------
--- Define general functions here
 function ItemPreviewImproved:DelayTimer()
-       Apollo.StartTimer("EventThresholdTimer")
+  Apollo.StartTimer("EventThresholdTimer")
 end
 
 function ItemPreviewImproved:ItemPreviewFormOpenCallback()
-        local wndImpSalv = Apollo.FindWindowByName("ItemPreviewForm")
-		local wndDecSalv = Apollo.FindWindowByName("DecorPreviewWindow")
-        if wndImpSalv and wndImpSalv:IsShown() then
-        	wndImpSalv:Show(false)
-			wndImpSalv:Destroy()
-		elseif wndDecSalv and wndDecSalv:IsShown() then
-			wndDecSalv:Show(false)
-			wndDecSalv:Destroy()
-        end
+  local wndImpSalv = Apollo.FindWindowByName("ItemPreviewForm")
+	local wndDecSalv = Apollo.FindWindowByName("DecorPreviewWindow")
+  
+  if wndImpSalv and wndImpSalv:IsShown() then
+    wndImpSalv:Show(false)
+		wndImpSalv:Destroy()
+	elseif wndDecSalv and wndDecSalv:IsShown() then
+    wndDecSalv:Show(false)
+		wndDecSalv:Destroy()
+  end
 end
 
 function ItemPreviewImproved:DrawLoot(luaCaller, tCurrentElement, nItemsInQueue)
@@ -603,55 +596,55 @@ end
 
 function ItemPreviewImproved:BuildListItem(luaCaller, aucCurr, wndParent, bBuyTab)
 	local itemCurr = aucCurr:GetItem()
-			local bIsOwnAuction = aucCurr:IsOwned()
-			local nBuyoutPrice = aucCurr:GetBuyoutPrice():GetAmount()
-			local nDefaultBid = math.max(aucCurr:GetMinBid():GetAmount(), aucCurr:GetCurrentBid():GetAmount())
+  local bIsOwnAuction = aucCurr:IsOwned()
+	local nBuyoutPrice = aucCurr:GetBuyoutPrice():GetAmount()
+	local nDefaultBid = math.max(aucCurr:GetMinBid():GetAmount(), aucCurr:GetCurrentBid():GetAmount())
+	local strFormToLoad = "BuyNowItem"
+		
+	if nBuyoutPrice == 0 then
+	 strFormToLoad = "BidOnlyItem"
+	elseif nDefaultBid >= nBuyoutPrice then
+	 strFormToLoad = "BuyOnlyItem"
+	end
 
-			local strFormToLoad = "BuyNowItem"
-			if nBuyoutPrice == 0 then
-				strFormToLoad = "BidOnlyItem"
-			elseif nDefaultBid >= nBuyoutPrice then
-				strFormToLoad = "BuyOnlyItem"
-			end
+	local wnd = Apollo.LoadForm(AuctionHouseAddon.xmlDoc, strFormToLoad, wndParent, AuctionHouseAddon)
+	
+	wnd:SetData(aucCurr)
+	wnd:FindChild("RowSelectBtn"):SetData(aucCurr)
+	wnd:FindChild("RowSelectBtn"):AddEventHandler("MouseButtonUp", "OnMouseButtonUp")
+	wnd:FindChild("RowSelectBtn"):Show(bBuyTab)
+	wnd:FindChild("ListName"):SetText(itemCurr:GetName())
+	wnd:FindChild("ListIcon"):SetSprite(itemCurr:GetIcon())
+	wnd:FindChild("ListIcon"):SetText(aucCurr:GetCount() <= 1 and "" or aucCurr:GetCount())
 
-			local wnd = Apollo.LoadForm(AuctionHouseAddon.xmlDoc, strFormToLoad, wndParent, AuctionHouseAddon)
-			wnd:SetData(aucCurr)
-			wnd:FindChild("RowSelectBtn"):SetData(aucCurr)
-			wnd:FindChild("RowSelectBtn"):AddEventHandler("MouseButtonUp", "OnMouseButtonUp")
-			wnd:FindChild("RowSelectBtn"):Show(bBuyTab)
-			wnd:FindChild("ListName"):SetText(itemCurr:GetName())
-			wnd:FindChild("ListIcon"):SetSprite(itemCurr:GetIcon())
-			wnd:FindChild("ListIcon"):SetText(aucCurr:GetCount() <= 1 and "" or aucCurr:GetCount())
+	local eTimeRemaining = aucCurr:GetTimeRemainingEnum()
+	
+	if bIsOwnAuction then
+	 wnd:FindChild("ListExpires"):SetText(AuctionHouseAddon.HelperFormatTimeString(luaCaller, aucCurr:GetExpirationTime()))
+	 wnd:FindChild("ListExpiresIcon"):SetSprite("Market:UI_Auction_Icon_TimeGreen")
+	 wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
+	elseif eTimeRemaining == ItemAuction.CodeEnumAuctionRemaining.Very_Long then
+	 wnd:FindChild("ListExpires"):SetTextRaw(String_GetWeaselString(Apollo.GetString("MarketplaceAuction_VeryLong"), kstrAuctionOrderDuration))
+	 wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
+	 wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeGreen")
+  else
+	 wnd:FindChild("ListExpires"):SetTextRaw(ktTimeRemaining[eTimeRemaining])
+	 wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("xkcdDullRed"))
+	 wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeRed")
+  end
+	
+	wnd:FindChild("OwnAuctionLabel"):Show(bIsOwnAuction)
+	wnd:FindChild("TopBidAuctionLabel"):Show(aucCurr:IsTopBidder())
 
-			local eTimeRemaining = aucCurr:GetTimeRemainingEnum()
-			if bIsOwnAuction then
-				wnd:FindChild("ListExpires"):SetText(AuctionHouseAddon.HelperFormatTimeString(luaCaller, aucCurr:GetExpirationTime()))
-				wnd:FindChild("ListExpiresIcon"):SetSprite("Market:UI_Auction_Icon_TimeGreen")
-				wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
+	if wnd:FindChild("BidPrice") then
+	 wnd:FindChild("BidPrice"):SetAmount(nDefaultBid)
+	end
 
-			elseif eTimeRemaining == ItemAuction.CodeEnumAuctionRemaining.Very_Long then
-				wnd:FindChild("ListExpires"):SetTextRaw(String_GetWeaselString(Apollo.GetString("MarketplaceAuction_VeryLong"), kstrAuctionOrderDuration))
-				wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
-				wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeGreen")
-
-			else
-				wnd:FindChild("ListExpires"):SetTextRaw(ktTimeRemaining[eTimeRemaining])
-				wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("xkcdDullRed"))
-				wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeRed")
-			end
-			wnd:FindChild("OwnAuctionLabel"):Show(bIsOwnAuction)
-			wnd:FindChild("TopBidAuctionLabel"):Show(aucCurr:IsTopBidder())
-
-			if wnd:FindChild("BidPrice") then
-				wnd:FindChild("BidPrice"):SetAmount(nDefaultBid)
-			end
-
-			if wnd:FindChild("BuyNowPrice") then
-				local bCanAffordBuyNow = AuctionHouseAddon.wndPlayerCashWindow:GetAmount() >= nBuyoutPrice
-				wnd:FindChild("BuyNowPrice"):SetAmount(nBuyoutPrice)
-				wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloTitle" or "UI_BtnTextRedNormal")
-			end
-
+	if wnd:FindChild("BuyNowPrice") then
+	 local bCanAffordBuyNow = AuctionHouseAddon.wndPlayerCashWindow:GetAmount() >= nBuyoutPrice
+	 wnd:FindChild("BuyNowPrice"):SetAmount(nBuyoutPrice)
+	 wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloTitle" or "UI_BtnTextRedNormal")
+  end
 end
 
 function ItemPreviewImproved:OnCloseFABkit( wndHandler, wndControl, eMouseButton )
@@ -690,23 +683,23 @@ function ItemPreviewImproved:OnSchematicsHook()
 	end
 	
 	if SchematicsAddon ~= nil then
-		if self:IsHooked(SchematicsAddon, "HelperBuildItemTooltip") == false then
-			self:PostHook(SchematicsAddon, "HelperBuildItemTooltip")
-				if SchematicsAddon.OnMouseButtonUp == nil then
-					SchematicsAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
-						if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
-							if wndHandler:GetData():GetHousingDecorInfoId() ~= nil and wndHandler:GetData():GetHousingDecorInfoId() ~= 0 then
-								Event_FireGenericEvent("DecorPreviewOpen", wndHandler:GetData():GetHousingDecorInfoId())
-								return
-							else
-								self:OnShowItemInDressingRoom(wndHandler:GetData())
-								return
-							end		
-        				end
-				end
-		end
-	end
-	end
+	 if self:IsHooked(SchematicsAddon, "HelperBuildItemTooltip") == false then
+		  self:PostHook(SchematicsAddon, "HelperBuildItemTooltip")
+			if SchematicsAddon.OnMouseButtonUp == nil then
+			 SchematicsAddon.OnMouseButtonUp = function (luaCaller, wndHandler, wndControl, eMouseButton)
+                            						  if Apollo.IsControlKeyDown() and eMouseButton == GameLib.CodeEnumInputMouse.Right then
+                              						  if wndHandler:GetData():GetHousingDecorInfoId() ~= nil and wndHandler:GetData():GetHousingDecorInfoId() ~= 0 then
+                              							 Event_FireGenericEvent("DecorPreviewOpen", wndHandler:GetData():GetHousingDecorInfoId())
+                              							 return
+                              							else
+                              							 self:OnShowItemInDressingRoom(wndHandler:GetData())
+                              							 return
+                              							end		
+                                  				end
+	                                       end
+      end
+    end
+  end
 end 
 
 function ItemPreviewImproved:OnIconBlockerClick(luaCaller, wndHandler, wndControl, eMouseButton)
