@@ -1,0 +1,16 @@
+lightweight tag 6a79225a279f7c8ba3eef954f813ccab118d11d9 v1.0.4
+Author:	Arne De Herdt <arne.de.herdt@maxdome.de>
+Date:	Thu Apr 16 14:13:11 2015 +0200
+
+commit 6a79225a279f7c8ba3eef954f813ccab118d11d9
+Author: Arne De Herdt <arne.de.herdt@maxdome.de>
+Date:   Thu Apr 16 14:13:11 2015 +0200
+
+    rewrote code, upped version
+
+commit 4ba7a1d516ad003aae2d5574f8b438d03dc143c7
+Author: Arne De Herdt <arne.de.herdt@maxdome.de>
+Date:   Thu Apr 16 13:28:59 2015 +0200
+
+    improved code readability
+

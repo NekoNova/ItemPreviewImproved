@@ -1208,7 +1208,7 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 	self.wndCostumeSelectionList:Show(false)
 	
 	self.tCostumeBtns = {}
-	self.nCostumeCount = GameLib.GetCostumeCount()
+	self.nCostumeCount = CostumesLib.GetCostumeCount()
 
 	for idx = 1, knNumCostumes do
 		self.tCostumeBtns[idx] = self.wndCostumeSelectionList:FindChild("CostumeBtn"..idx)
@@ -1220,7 +1220,7 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 			self.wndMain:FindChild("CostumeBtn" .. idx):SetText(String_GetWeaselString(Apollo.GetString("Character_CostumeNum"), idx)) -- TODO: this will be a real name at some point
 		end
 	end
-	self.nCurrentCostume = GameLib.GetCostumeIndex()
+	self.nCurrentCostume = CostumesLib.GetCostumeIndex()
 	local wndCurrentCostume = self.wndMain:FindChild("CostumeBtnHolder"):FindChild("CostumeBtn" .. self.nCurrentCostume)
 
 	if self.nCurrentCostume > 0 and self.nCurrentCostume ~= nil then
