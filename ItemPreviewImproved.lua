@@ -250,8 +250,10 @@ function ItemPreviewImproved:OnLoad()
 	local GeminiHook = Apollo.GetPackage("Gemini:Hook-1.0").tPackage
 	tAddonNames = Apollo.GetAddons()
 	GeminiHook:Embed(self)
+	
 	self.xmlDoc = XmlDoc.CreateFromFile("ItemPreviewImproved.xml")
 	self.xmlDoc:RegisterCallback("OnDocLoaded", self)
+	
 	self.wndMain = Apollo.LoadForm(self.xmlDoc, "ItemPreviewImprovedForm", "TooltipStratum", self)
 	self.wndMount = Apollo.LoadForm(self.xmlDoc, "ItemPreviewImprovedMountForm", "TooltipStratum", self)
 	self.wndFABkit = Apollo.LoadForm(self.xmlDoc, "HousingPreview", nil, self)
@@ -264,9 +266,9 @@ function ItemPreviewImproved:OnLoad()
 	self.wndDyeLegs = self.wndMain:FindChild("PreviewInformation:InfoLegs:DyeWindow")
 	self.wndDyeFeet = self.wndMain:FindChild("PreviewInformation:InfoFeet:DyeWindow")
 	self.wndDecorPreview 	= Apollo.LoadForm(self.xmlDoc, "DecorPreviewImprovedForm", nil, self)
-  self.wndModelWindow 	= self.wndDecorPreview:FindChild("ModelWindow")
-  self.wndRotateRight 	= self.wndDecorPreview:FindChild("RotateRightButton")
-  self.wndRotateLeft 		= self.wndDecorPreview:FindChild("RotateLeftButton")
+	self.wndModelWindow 	= self.wndDecorPreview:FindChild("ModelWindow")
+	self.wndRotateRight 	= self.wndDecorPreview:FindChild("RotateRightButton")
+	self.wndRotateLeft 		= self.wndDecorPreview:FindChild("RotateLeftButton")
 
 	tSelectedItems = {}
 	self.DyeButtons = {
@@ -304,6 +306,7 @@ function ItemPreviewImproved:OnLoad()
 	
 	self.alreadyLoadedCostume = {}
 	playerunit = GameLib.GetPlayerUnit()
+	
 	self.wndMain:FindChild("PreviewWindow"):SetCostume(playerunit)
 	self.wndMain:FindChild("PreviewInformation"):Show(false)
 	self.wndMount:FindChild("noMount"):Show(false)
@@ -320,6 +323,7 @@ function ItemPreviewImproved:OnLoad()
 		self.DyeButtons[val][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
 		self.DyeButtons[val][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
 	end
+	
 	self.wndDyeHead:Show(false)
 	self.wndDyeShoulder:Show(false)
 	self.wndDyeChest:Show(false)
@@ -525,7 +529,7 @@ function ItemPreviewImproved:OnDocLoaded()
 	self.wndMain:Show(false, true)
 
 	Apollo.RegisterEventHandler("ShowItemInDressingRoom", "OnShowItemInDressingRoom", self)
-  Apollo.RegisterEventHandler("ShowItemInDressingRoom", "DelayTimer", self)
+	Apollo.RegisterEventHandler("ShowItemInDressingRoom", "DelayTimer", self)
 	Apollo.RegisterEventHandler("AppearanceChanged", "OnAppearanceChanged", self)
 	Apollo.RegisterEventHandler("GenericEvent_InitializeSchematicsTree", "OnSchematicsInitialize", self)
 	Apollo.RegisterEventHandler("DecorPreviewOpen", "OnOpenPreviewDecor", self)
@@ -535,6 +539,9 @@ function ItemPreviewImproved:OnDocLoaded()
 	Apollo.RegisterTimerHandler("AppearanceChangedTimer", "UpdateCostume", self)
 	Apollo.RegisterTimerHandler("SchematicsHook", "OnSchematicsHook", self)
 
+	-- Drop 5 : Intercept the PreviewClick from the Inventory:
+	Apollo.RegisterEventHandler("GenericEvent_LoadItemPreview", "OnShowItemInDressingRoom", self)
+	
 	Apollo.CreateTimer("EventThresholdTimer", 0.01, false)
 	Apollo.CreateTimer("AppearanceChangedTimer", 0.1, false)
 	Apollo.CreateTimer("SchematicsHook", 0.1, false)
@@ -543,16 +550,16 @@ function ItemPreviewImproved:OnDocLoaded()
 	-- Data Initialization
 	---------------------------------------------------------------------------
 	if lightMode then
-	 self.wndMain:FindChild("btnToggleLightMode"):SetCheck(lightMode)
+		self.wndMain:FindChild("btnToggleLightMode"):SetCheck(lightMode)
 	else
-    lightMode = false
+		lightMode = false
 	end
 	
 	wndMainResized = false
 				
-  self:ConfigureChallengePreviewAddon()
-  self:ConfigureRollPreviewAddon()
-  self:ConfigureMountPreviewAddon()
+	self:ConfigureChallengePreviewAddon()
+	self:ConfigureRollPreviewAddon()
+	self:ConfigureMountPreviewAddon()
 	self:ConfigureAuctionHouseAddon()
 	self:ConfigureTradeskillAddon()
 	self:ConfigueQuestRewardAddon()
@@ -568,16 +575,24 @@ function ItemPreviewImproved:DelayTimer()
 end
 
 function ItemPreviewImproved:ItemPreviewFormOpenCallback()
-  local wndImpSalv = Apollo.FindWindowByName("ItemPreviewForm")
+	local wndImpSalv = Apollo.FindWindowByName("ItemPreviewForm")
 	local wndDecSalv = Apollo.FindWindowByName("DecorPreviewWindow")
-  
-  if wndImpSalv and wndImpSalv:IsShown() then
-    wndImpSalv:Show(false)
+	local wndContext = Apollo.FindWindowByName("ContextMenuItemForm")
+	
+	if wndImpSalv and wndImpSalv:IsShown() then
+		wndImpSalv:Show(false)
 		wndImpSalv:Destroy()
 	elseif wndDecSalv and wndDecSalv:IsShown() then
-    wndDecSalv:Show(false)
+		wndDecSalv:Show(false)
 		wndDecSalv:Destroy()
-  end
+	-- Drop 5 Fix : Hide Preview button in Context Menu
+	elseif wndContext and wndContext:IsShown() then
+		local button = wndContext:FindChild("BtnPreviewItem")
+		
+		if button and button:IsShown() then
+			button:Enable(false)
+		end
+	end
 end
 
 function ItemPreviewImproved:DrawLoot(luaCaller, tCurrentElement, nItemsInQueue)
