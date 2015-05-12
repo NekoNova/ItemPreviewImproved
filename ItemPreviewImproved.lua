@@ -1649,9 +1649,9 @@ function ItemPreviewImproved:OnCostumeBtnToggle(wndHandler, wndCtrl)
 		local wndCurrentCostume = wndCostumeHolder:FindChild("CostumeBtn" .. self.nCurrentCostume)
 		local strName = wndCurrentCostume:GetText()
 		self.wndMain:FindChild("SelectCostumeWindowToggle"):SetText(strName)
-		GameLib.SetCostumeIndex(self.nCurrentCostume)
+		CostumesLib.SetCostumeIndex(self.nCurrentCostume)
 	else
-		GameLib.SetCostumeIndex(self.nCurrentCostume)
+		CostumesLib.SetCostumeIndex(self.nCurrentCostume)
 		self.wndMain:FindChild("SelectCostumeWindowToggle"):SetText(Apollo.GetString("Character_CostumeSelectDefault"))
 	end
 	
