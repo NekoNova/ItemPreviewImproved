@@ -614,7 +614,7 @@ function ItemPreviewImproved:BuildListItem(luaCaller, aucCurr, wndParent, bBuyTa
 	end
 
 	if wnd:FindChild("BuyNowPrice") then
-	 local bCanAffordBuyNow = self.addonAuctionHouse.wndPlayerCashWindow:GetAmount() >= nBuyoutPrice
+	local bCanAffordBuyNow = GameLib.GetPlayerCurrency():GetAmount() >= nBuyoutPrice
 	 wnd:FindChild("BuyNowPrice"):SetAmount(nBuyoutPrice)
 	 wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloTitle" or "UI_BtnTextRedNormal")
   end
