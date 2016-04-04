@@ -569,15 +569,15 @@ end
 
 function ItemPreviewImproved:BuildListItem(luaCaller, aucCurr, wndParent, bBuyTab)
 	local itemCurr = aucCurr:GetItem()
-  local bIsOwnAuction = aucCurr:IsOwned()
+  	local bIsOwnAuction = aucCurr:IsOwned()
 	local nBuyoutPrice = aucCurr:GetBuyoutPrice():GetAmount()
 	local nDefaultBid = math.max(aucCurr:GetMinBid():GetAmount(), aucCurr:GetCurrentBid():GetAmount())
 	local strFormToLoad = "BuyNowItem"
 		
 	if nBuyoutPrice == 0 then
-	 strFormToLoad = "BidOnlyItem"
+		strFormToLoad = "BidOnlyItem"
 	elseif nDefaultBid >= nBuyoutPrice then
-	 strFormToLoad = "BuyOnlyItem"
+	 	strFormToLoad = "BuyOnlyItem"
 	end
 
 	local wnd = Apollo.LoadForm(self.addonAuctionHouse.xmlDoc, strFormToLoad, wndParent, self.addonAuctionHouse)
@@ -593,31 +593,32 @@ function ItemPreviewImproved:BuildListItem(luaCaller, aucCurr, wndParent, bBuyTa
 	local eTimeRemaining = aucCurr:GetTimeRemainingEnum()
 	
 	if bIsOwnAuction then
-	 wnd:FindChild("ListExpires"):SetText(self.addonAuctionHouse.HelperFormatTimeString(luaCaller, aucCurr:GetExpirationTime()))
-	 wnd:FindChild("ListExpiresIcon"):SetSprite("Market:UI_Auction_Icon_TimeGreen")
-	 wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
+	 	wnd:FindChild("ListExpires"):SetText(self.addonAuctionHouse.HelperFormatTimeString(luaCaller, aucCurr:GetExpirationTime()))
+	 	wnd:FindChild("ListExpiresIcon"):SetSprite("Market:UI_Auction_Icon_TimeGreen")
+	 	wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
 	elseif eTimeRemaining == ItemAuction.CodeEnumAuctionRemaining.Very_Long then
-	 wnd:FindChild("ListExpires"):SetTextRaw(String_GetWeaselString(Apollo.GetString("MarketplaceAuction_VeryLong"), kstrAuctionOrderDuration))
-	 wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
-	 wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeGreen")
-  else
-	 wnd:FindChild("ListExpires"):SetTextRaw(self.ktTimeRemaining[eTimeRemaining])
-	 wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("xkcdDullRed"))
-	 wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeRed")
-  end
+	 	wnd:FindChild("ListExpires"):SetTextRaw(String_GetWeaselString(Apollo.GetString("MarketplaceAuction_VeryLong"), kstrAuctionOrderDuration))
+	 	wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("UI_TextHoloTitle"))
+	 	wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeGreen")
+  	else
+	 	wnd:FindChild("ListExpires"):SetTextRaw(self.ktTimeRemaining[eTimeRemaining])
+	 	wnd:FindChild("ListExpires"):SetTextColor(ApolloColor.new("xkcdDullRed"))
+	 	wnd:FindChild("ListExpiresIcon"):Show("Market:UI_Auction_Icon_TimeRed")
+  	end
 	
 	wnd:FindChild("OwnAuctionLabel"):Show(bIsOwnAuction)
 	wnd:FindChild("TopBidAuctionLabel"):Show(aucCurr:IsTopBidder())
 
 	if wnd:FindChild("BidPrice") then
-	 wnd:FindChild("BidPrice"):SetAmount(nDefaultBid)
+	 	wnd:FindChild("BidPrice"):SetAmount(nDefaultBid)
 	end
 
 	if wnd:FindChild("BuyNowPrice") then
-	local bCanAffordBuyNow = GameLib.GetPlayerCurrency():GetAmount() >= nBuyoutPrice
-	 wnd:FindChild("BuyNowPrice"):SetAmount(nBuyoutPrice)
-	 wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloTitle" or "UI_BtnTextRedNormal")
-  end
+		local bCanAffordBuyNow = GameLib.GetPlayerCurrency():GetAmount() >= nBuyoutPrice
+
+		wnd:FindChild("BuyNowPrice"):SetAmount(nBuyoutPrice)
+	 	wnd:FindChild("BuyNowPrice"):SetTextColor(bCanAffordBuyNow and "UI_TextHoloTitle" or "UI_BtnTextRedNormal")
+  	end
 end
 
 function ItemPreviewImproved:OnCloseFABkit( wndHandler, wndControl, eMouseButton )
