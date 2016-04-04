@@ -498,7 +498,7 @@ function ItemPreviewImproved:OnDocLoaded()
 
 	-- Drop 5 : Intercept the PreviewClick from the Inventory:
 	Apollo.RegisterEventHandler("GenericEvent_LoadItemPreview", "OnShowItemInDressingRoom", self)
-  	Apollo.RegisterEventHandler("GenericEvent_LoadDecorPreview", "OnShowItemInDressingRoom", self)
+  	Apollo.RegisterEventHandler("GenericEvent_LoadDecorPreview", "OnOpenPreviewDecor", self)
 	
 	Apollo.CreateTimer("EventThresholdTimer", 0.01, false)
 	Apollo.CreateTimer("AppearanceChangedTimer", 0.1, false)
@@ -800,7 +800,9 @@ function ItemPreviewImproved:HelperBuildItemTooltip(luaCaller, wndArg, item)
 	wndArg:SetData(item)
 end
 
-function ItemPreviewImproved:OnShowItemInDressingRoom(item)
+function ItemPreviewImproved:OnShowItemInDressingRoom(nItemSlot)
+	local item = Item.GetItemFromInventoryLoc(nItemSlot)
+
 	self.addonPreview = Apollo.GetAddon("ItemPreview")
 		if self.addonPreview ~= nil then
 			if self.addonPreview.wndMain and self.addonPreview.wndMain:IsShown() then
@@ -1833,14 +1835,26 @@ function ItemPreviewImproved:CheckFABkit(item)
 	end
 end
 
+-- This function is called whenever the following 2 events are fired:
+--
+-- DecorPreviewOpen: Raised by ourselves when needed (OLD CODE)
+-- GenericEvent_LoadDecorPreview: Raised by the context menu of Carbine
+--
+-- We will search for the original DecorPreview Addon of Carbine, kill it
+-- and show our own window instead for people.
 function ItemPreviewImproved:OnOpenPreviewDecor(idDecorInfo)
+	-- Find Carbine's DecorPreview Addon
 	self.addonDecorPreview = Apollo.GetAddon("DecorPreview")
+
+	-- Remove it if it shows.
 	if self.addonDecorPreview ~= nil then
-		if self.addonDecorPreview.wndMain and previewAddon.wndMain:IsShown() then
-			self.addonDecorPreview.wndMain:Show(false)
-			self.addonDecorPreview.wndMain:Destroy()
+		if self.addonDecorPreview.wndDecorPreview and self.addonDecorPreview.wndDecorPreview:IsShown() then
+			self.addonDecorPreview.wndDecorPreview:Show(false)
+			self.addonDecorPreview.wndDecorPreview:Destroy()
 		end
 	end
+
+	-- Display our own forms for showing the decor.
 	self:DelayTimer()
     self.wndDecorPreview:Show(true)
     self.idDecorInfo = idDecorInfo
