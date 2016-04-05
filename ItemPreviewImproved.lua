@@ -801,9 +801,7 @@ function ItemPreviewImproved:HelperBuildItemTooltip(luaCaller, wndArg, item)
 	wndArg:SetData(item)
 end
 
-function ItemPreviewImproved:OnShowItemInDressingRoom(nItemSlot)
-	local item = Item.GetItemFromInventoryLoc(nItemSlot)
-
+function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 	self.addonPreview = Apollo.GetAddon("ItemPreview")
 		if self.addonPreview ~= nil then
 			if self.addonPreview.wndMain and self.addonPreview.wndMain:IsShown() then
