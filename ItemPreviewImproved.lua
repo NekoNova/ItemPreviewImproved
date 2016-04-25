@@ -2,7 +2,6 @@
 -- Client Lua Script for ItemPreviewImprovedEx
 -- Copyright (c) NCsoft. All rights reserved
 -----------------------------------------------------------------------------------------------
- 
 require "Window"
 require "GameLib"
 require "HousingLib"
@@ -51,17 +50,20 @@ local currPreviewedItems =
 	["Legs"] = nil,
 	["Feet"] = nil
 }
-local ktVisibleSlots = { 2, 3, 0, 5, 1, 4, 16 }
+local ktVisibleSlots = { 
+	2,	-- Head
+	3,
+	0,
+	5,
+	1,
+	4,
+	16	-- Weapon
+}
 -- Supported AuctionHouse Addons
 local suppAuctionHouse =
 {
 	"MarketplaceAuction",
 	"EZAuction"
-}
--- Supported Challenge Reward Addons
-local suppChallenges =
-{
-	"ChallengeRewardPanel"
 }
 -- Supported Vendor Addons
 local suppVendors =
@@ -290,21 +292,6 @@ function ItemPreviewImproved:OnLoad()
 	self.wndDyeListContainer:Show(false)
 end
 
-function ItemPreviewImproved:ConfigureChallengePreviewAddon()
-  for key,val in pairs(suppChallenges) do
-    self.addonChallenge = Apollo.GetAddon(val)
-    
-    if self.addonChallenge ~= nil then break end
-  end
-    
-  if self.addonChallenge == nil then
-    ChatSystemLib.PostOnChannel(2,"ItemPreviewImproved: Could not load any supported Challenge addon! \nPlease contact the author of the addon via Curse!")
-  else
-    self:RawHook(self.addonChallenge, "OnIconBlockerClick")
-    self:PostHook(self.addonChallenge, "OnGenerateTooltip")
-  end
-end
-
 function ItemPreviewImproved:ConfigureRollPreviewAddon()
   for key,val in pairs(suppRolls) do
     self.addonRoll = Apollo.GetAddon(val)
@@ -481,55 +468,53 @@ end
 -- ItemPreviewImproved OnDocLoaded
 -----------------------------------------------------------------------------------------------
 function ItemPreviewImproved:OnDocLoaded()
-  if self.xmlDoc == nil then return end
-	
-	self.wndMain:Show(false, true)
+    if self.xmlDoc == nil then return end
 
-	Apollo.RegisterEventHandler("ShowItemInDressingRoom", "OnShowItemInDressingRoom", self)
-	Apollo.RegisterEventHandler("ShowItemInDressingRoom", "DelayTimer", self)
-	Apollo.RegisterEventHandler("AppearanceChanged", "OnAppearanceChanged", self)
-	Apollo.RegisterEventHandler("GenericEvent_InitializeSchematicsTree", "OnSchematicsInitialize", self)
-	Apollo.RegisterEventHandler("DecorPreviewOpen", "OnOpenPreviewDecor", self)
-	Apollo.RegisterEventHandler("DecorPreviewClose", "OnCloseDecorPreviewWindow", self)
-		
-	Apollo.RegisterTimerHandler("EventThresholdTimer", "ItemPreviewFormOpenCallback", self)
-	Apollo.RegisterTimerHandler("AppearanceChangedTimer", "UpdateCostume", self)
-	Apollo.RegisterTimerHandler("SchematicsHook", "OnSchematicsHook", self)
+    self.wndMain:Show(false, true)
 
-	-- Drop 5 : Intercept the PreviewClick from the Inventory:
-	Apollo.RegisterEventHandler("GenericEvent_LoadItemPreview", "OnShowItemInDressingRoom", self)
-  	Apollo.RegisterEventHandler("GenericEvent_LoadDecorPreview", "OnOpenPreviewDecor", self)
-	
-	Apollo.CreateTimer("EventThresholdTimer", 0.01, false)
-	Apollo.CreateTimer("AppearanceChangedTimer", 0.1, false)
-	Apollo.CreateTimer("SchematicsHook", 0.1, false)
-	
-	---------------------------------------------------------------------------
-	-- Data Initialization
-	---------------------------------------------------------------------------
-	if self.tLightMode then
-		self.wndMain:FindChild("btnToggleLightMode"):SetCheck(self.tLightMode)
-	else
-		self.tLightMode = false
-	end
-	
-	self.wndMainResized = false
-				
-	self:ConfigureChallengePreviewAddon()
-	self:ConfigureRollPreviewAddon()
-	self:ConfigureMountPreviewAddon()
-	self:ConfigureAuctionHouseAddon()
-	self:ConfigureTradeskillAddon()
-	self:ConfigueQuestRewardAddon()
-	self:ConfigureQuestLogAddon()
-	self:ConfigureChatLinkAddon()
+    -- EventHandlers
+    Apollo.RegisterEventHandler("ShowItemInDressingRoom", "OnShowItemInDressingRoom", self)
+    Apollo.RegisterEventHandler("ShowItemInDressingRoom", "DelayTimer", self)
+    Apollo.RegisterEventHandler("AppearanceChanged", "OnAppearanceChanged", self)
+    Apollo.RegisterEventHandler("GenericEvent_InitializeSchematicsTree", "OnSchematicsInitialize", self)
+    Apollo.RegisterEventHandler("DecorPreviewOpen", "OnOpenPreviewDecor", self)
+    Apollo.RegisterEventHandler("DecorPreviewClose", "OnCloseDecorPreviewWindow", self)
+
+    -- Drop 5 : Intercept the PreviewClick from the Inventory:
+    Apollo.RegisterEventHandler("GenericEvent_LoadItemPreview", "OnShowItemInDressingRoom", self)
+    Apollo.RegisterEventHandler("GenericEvent_LoadDecorPreview", "OnOpenPreviewDecor", self)
+
+    -- ApolloTimers
+    self.tmrEventThreshold = ApolloTimer.Create(0.01, false, "ItemPreviewFormOpenCallback", self)
+    self.tmrAppearanceChanged = ApolloTimer.Create(0.1, false, "UpdateCostume", self)
+    self.tmrSchematicsHook = ApolloTimer.Create(0.1, false, "OnSchematicsHook", self)
+
+    ---------------------------------------------------------------------------
+    -- Data Initialization
+    ---------------------------------------------------------------------------
+    if self.tLightMode then
+        self.wndMain:FindChild("btnToggleLightMode"):SetCheck(self.tLightMode)
+    else
+        self.tLightMode = false
+    end
+
+    self.wndMainResized = false
+
+    -- Configure the supported Addons.
+    self:ConfigureRollPreviewAddon()
+    self:ConfigureMountPreviewAddon()
+    self:ConfigureAuctionHouseAddon()
+    self:ConfigureTradeskillAddon()
+    self:ConfigueQuestRewardAddon()
+    self:ConfigureQuestLogAddon()
+    self:ConfigureChatLinkAddon()
 end
 
 -----------------------------------------------------------------------------------------------
 -- ItemPreviewImproved Functions
 -----------------------------------------------------------------------------------------------
 function ItemPreviewImproved:DelayTimer()
-  Apollo.StartTimer("EventThresholdTimer")
+    self.tmrEventThreshold:Start()
 end
 
 function ItemPreviewImproved:ItemPreviewFormOpenCallback()
@@ -697,7 +682,7 @@ function ItemPreviewImproved:OnIconBlockerClick(luaCaller, wndHandler, wndContro
 end
 
 function ItemPreviewImproved:OnSchematicsInitialize()
-	Apollo.StartTimer("SchematicsHook")
+    self.tmrSchematicsHook:Start()
 end
 
 function ItemPreviewImproved:UpdateCostume()
@@ -712,7 +697,7 @@ end
 
 function ItemPreviewImproved:OnAppearanceChanged()
 	self.wndMain:FindChild("PreviewWindow"):SetCostume(nil)
-	Apollo.StartTimer("AppearanceChangedTimer")
+    self.tmrAppearanceChanged:Start()
 end
 
 function ItemPreviewImproved:OnGenerateTooltip(luaCaller, wndControl, wndHandler, eType, Arg1, Arg2)
@@ -835,9 +820,10 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 
 	local strItem = item:GetName()
 	
+	-- Check if we are displaying a Headslot Item
 	if ktVisibleSlots[1] == item:GetSlot() then
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):GetText() ~= nil then
+			if self.wndMain:FindChild("PreviewInformation")	:FindChild("InfoHead"):FindChild("ItemLabelHead"):GetText() ~= nil then
 				if currPreviewedItems["Head"] ~= nil then
 					self.tSelectedItems[currPreviewedItems["Head"]:GetItemId()] = nil
 				end
@@ -853,9 +839,12 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 				self.DyeButtons["Head"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
 				self.DyeButtons["Head"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
 			end
+			
 			currPreviewedItems["Head"] = item
 			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText(strItem)
+			
 			local dyeChannels = item:GetAvailableDyeChannel()
+			
 			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
 				self.wndDyeHead:Show(false)
 			else
@@ -872,6 +861,7 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 				if currPreviewedItems["Head"] ~= nil then
 					self.tSelectedItems[currPreviewedItems["Head"]:GetItemId()] = nil
 				end
+				
 				currPreviewedItems["Head"] = nil
 				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText("")
 				self.DyeButtons["Head"][1]:SetCheck(false)
@@ -883,10 +873,12 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 				self.DyeButtons["Head"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
 				self.DyeButtons["Head"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
 				self.DyeButtons["Head"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				end
+			end
+			
 			if self.wndDyeHead:IsShown() then
 				self.wndDyeHead:Show(false)
 			end
+			
 			currPreviewedItems["Head"] = item
 			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText(strItem)
 		end
