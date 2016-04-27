@@ -786,6 +786,63 @@ function ItemPreviewImproved:HelperBuildItemTooltip(luaCaller, wndArg, item)
 	wndArg:SetData(item)
 end
 
+------------------------------------------------------------------------------------------------------------------------
+-- Toggles the visibiliy of the DyeWindows, based on the provided parent window and the item displayed.
+--
+-- If the item has no DyeChannels, the DyeWindows will be hidden.
+-- Otherwise only the supported Windows are shown.
+------------------------------------------------------------------------------------------------------------------------
+function ItemPreviewImproved:ToggleDyeWindows(wndParent, item)
+	local dyeChannels = item:GetAvailableDyeChannel()
+
+	if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
+		wndParent:Show(false)
+	else
+		wndParent:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
+		wndParent:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
+		wndParent:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
+		wndParent:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
+		wndParent:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
+		wndParent:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
+		wndParent:Show(true)
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------
+-- Resets the Display status of the DyeButtons for the given slot.
+------------------------------------------------------------------------------------------------------------------------
+function ItemPreviewImproved:ResetItemWindow(strSlot)
+	currPreviewedItems[strSlot] = nil
+
+	self.wndMain:FindChild("PreviewInformation"):FindChild("Info"..strSlot):FindChild("ItemLabel"..strSlot):SetText("")
+
+	for i = 1, 3, 1 do
+		self.DyeButtons[strSlot][i]:SetCheck(false)
+		self.DyeButtons[strSlot][i]:SetData(nil)
+		self.DyeButtons[strSlot][i]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
+	end
+end
+
+------------------------------------------------------------------------------------------------------------------------
+-- Resets the item currently being displayed for the specified slot.
+------------------------------------------------------------------------------------------------------------------------
+function ItemPreviewImproved:ResetDisplayedItem(strSlot, item)
+    local wndPreviewInformation = self.wndMain:FindChild("PreviewInformation")
+    local wndDisplay = wndPreviewInformation:FindChild("Info"..strSlot):FindChild("ItemLabel"..strSlot)
+
+    if wndDisplay and wndDisplay:GetText() ~= nil then
+        if currPreviewedItems[strSlot] ~= nil then
+            self.tSelectedItems[currPreviewedItems[strSlot]:GetItemId()] = nil
+        end
+
+        self:ResetItemWindow(strSlot)
+    end
+
+    currPreviewedItems[strSlot] = item
+
+    wndDisplay:SetText(item:GetName() or "")
+end
+
 function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 	self.addonPreview = Apollo.GetAddon("ItemPreview")
 		if self.addonPreview ~= nil then
@@ -817,349 +874,70 @@ function ItemPreviewImproved:OnShowItemInDressingRoom(item)
 	if self.locSavedWindowLoc then
 		self.wndMain:MoveToLocation(self.locSavedWindowLoc)
 	end
-
-	local strItem = item:GetName()
 	
 	-- Check if we are displaying a Headslot Item
 	if ktVisibleSlots[1] == item:GetSlot() then
+        self:ResetDisplayedItem("Head", item)
+
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation")	:FindChild("InfoHead"):FindChild("ItemLabelHead"):GetText() ~= nil then
-				if currPreviewedItems["Head"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Head"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Head"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText("")
-				self.DyeButtons["Head"][1]:SetCheck(false)
-				self.DyeButtons["Head"][2]:SetCheck(false)
-				self.DyeButtons["Head"][3]:SetCheck(false)
-				self.DyeButtons["Head"][1]:SetData(nil)
-				self.DyeButtons["Head"][2]:SetData(nil)
-				self.DyeButtons["Head"][3]:SetData(nil)
-				self.DyeButtons["Head"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Head"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Head"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			
-			currPreviewedItems["Head"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText(strItem)
-			
-			local dyeChannels = item:GetAvailableDyeChannel()
-			
-			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
-				self.wndDyeHead:Show(false)
-			else
-				self.wndDyeHead:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
-				self.wndDyeHead:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
-				self.wndDyeHead:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
-				self.wndDyeHead:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeHead:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeHead:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeHead:Show(true)
-			end
+			self:ToggleDyeWindows(self.wndDyeHead, item)
 		else
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):GetText() ~= nil then
-				if currPreviewedItems["Head"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Head"]:GetItemId()] = nil
-				end
-				
-				currPreviewedItems["Head"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText("")
-				self.DyeButtons["Head"][1]:SetCheck(false)
-				self.DyeButtons["Head"][2]:SetCheck(false)
-				self.DyeButtons["Head"][3]:SetCheck(false)
-				self.DyeButtons["Head"][1]:SetData(nil)
-				self.DyeButtons["Head"][2]:SetData(nil)
-				self.DyeButtons["Head"][3]:SetData(nil)
-				self.DyeButtons["Head"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Head"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Head"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			
 			if self.wndDyeHead:IsShown() then
 				self.wndDyeHead:Show(false)
 			end
-			
-			currPreviewedItems["Head"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHead"):FindChild("ItemLabelHead"):SetText(strItem)
 		end
 	elseif ktVisibleSlots[2] == item:GetSlot() then
+        self:ResetDisplayedItem("Shoulder", item)
+
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoShoulder"):FindChild("ItemLabelShoulder"):GetText() ~= nil then
-				if currPreviewedItems["Shoulder"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Shoulder"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Shoulder"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoShoulder"):FindChild("ItemLabelShoulder"):SetText("")
-				self.DyeButtons["Shoulder"][1]:SetCheck(false)
-				self.DyeButtons["Shoulder"][2]:SetCheck(false)
-				self.DyeButtons["Shoulder"][3]:SetCheck(false)
-				self.DyeButtons["Shoulder"][1]:SetData(nil)
-				self.DyeButtons["Shoulder"][2]:SetData(nil)
-				self.DyeButtons["Shoulder"][3]:SetData(nil)
-				self.DyeButtons["Shoulder"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Shoulder"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Shoulder"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			currPreviewedItems["Shoulder"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoShoulder"):FindChild("ItemLabelShoulder"):SetText(strItem)
-			local dyeChannels = item:GetAvailableDyeChannel()
-			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
-				self.wndDyeShoulder:Show(false)
-			else
-				self.wndDyeShoulder:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
-				self.wndDyeShoulder:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
-				self.wndDyeShoulder:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
-				self.wndDyeShoulder:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeShoulder:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeShoulder:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeShoulder:Show(true)
-			end
+			self:ToggleDyeWindows(self.wndDyeShoulder, item)
 		else
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoShoulder"):FindChild("ItemLabelShoulder"):GetText() ~= nil then
-				if currPreviewedItems["Shoulder"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Shoulder"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Shoulder"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoShoulder"):FindChild("ItemLabelShoulder"):SetText("")
-				self.DyeButtons["Shoulder"][1]:SetCheck(false)
-				self.DyeButtons["Shoulder"][2]:SetCheck(false)
-				self.DyeButtons["Shoulder"][3]:SetCheck(false)
-				self.DyeButtons["Shoulder"][1]:SetData(nil)
-				self.DyeButtons["Shoulder"][2]:SetData(nil)
-				self.DyeButtons["Shoulder"][3]:SetData(nil)
-				self.DyeButtons["Shoulder"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Shoulder"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Shoulder"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
 			if self.wndDyeShoulder:IsShown() then
 				self.wndDyeShoulder:Show(false)
-			end
-			currPreviewedItems["Shoulder"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoShoulder"):FindChild("ItemLabelShoulder"):SetText(strItem)
+            end
 		end
 	elseif ktVisibleSlots[3] == item:GetSlot() then
+        self:ResetDisplayedItem("Chest", item)
+
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoChest"):FindChild("ItemLabelChest"):GetText() ~= nil then
-				if currPreviewedItems["Chest"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Chest"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Chest"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoChest"):FindChild("ItemLabelChest"):SetText("")
-				self.DyeButtons["Chest"][1]:SetCheck(false)
-				self.DyeButtons["Chest"][2]:SetCheck(false)
-				self.DyeButtons["Chest"][3]:SetCheck(false)
-				self.DyeButtons["Chest"][1]:SetData(nil)
-				self.DyeButtons["Chest"][2]:SetData(nil)
-				self.DyeButtons["Chest"][3]:SetData(nil)
-				self.DyeButtons["Chest"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Chest"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Chest"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			currPreviewedItems["Chest"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoChest"):FindChild("ItemLabelChest"):SetText(strItem)
-			local dyeChannels = item:GetAvailableDyeChannel()
-			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
-				self.wndDyeChest:Show(false)
-			else
-				self.wndDyeChest:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
-				self.wndDyeChest:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
-				self.wndDyeChest:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
-				self.wndDyeChest:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeChest:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeChest:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeChest:Show(true)
-			end
+			self:ToggleDyeWindows(self.wndDyeChest, item)
 		else
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoChest"):FindChild("ItemLabelChest"):GetText() ~= nil then
-				if currPreviewedItems["Chest"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Chest"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Chest"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoChest"):FindChild("ItemLabelChest"):SetText("")
-				self.DyeButtons["Chest"][1]:SetCheck(false)
-				self.DyeButtons["Chest"][2]:SetCheck(false)
-				self.DyeButtons["Chest"][3]:SetCheck(false)
-				self.DyeButtons["Chest"][1]:SetData(nil)
-				self.DyeButtons["Chest"][2]:SetData(nil)
-				self.DyeButtons["Chest"][3]:SetData(nil)
-				self.DyeButtons["Chest"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Chest"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Chest"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
 			if self.wndDyeChest:IsShown() then
 				self.wndDyeChest:Show(false)
-			end
-			currPreviewedItems["Chest"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoChest"):FindChild("ItemLabelChest"):SetText(strItem)
+            end
 		end
 	elseif ktVisibleSlots[4] == item:GetSlot() then
+        self:ResetDisplayedItem("Hands", item)
+
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHands"):FindChild("ItemLabelHands"):GetText() ~= nil then
-				if currPreviewedItems["Hands"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Hands"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Hands"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHands"):FindChild("ItemLabelHands"):SetText("")
-				self.DyeButtons["Hands"][1]:SetCheck(false)
-				self.DyeButtons["Hands"][2]:SetCheck(false)
-				self.DyeButtons["Hands"][3]:SetCheck(false)
-				self.DyeButtons["Hands"][1]:SetData(nil)
-				self.DyeButtons["Hands"][2]:SetData(nil)
-				self.DyeButtons["Hands"][3]:SetData(nil)
-				self.DyeButtons["Hands"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Hands"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Hands"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			currPreviewedItems["Hands"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHands"):FindChild("ItemLabelHands"):SetText(strItem)
-			local dyeChannels = item:GetAvailableDyeChannel()
-			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
-				self.wndDyeHands:Show(false)
-			else
-				self.wndDyeHands:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
-				self.wndDyeHands:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
-				self.wndDyeHands:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
-				self.wndDyeHands:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeHands:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeHands:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeHands:Show(true)
-			end
+			self:ToggleDyeWindows(self.wndDyeHands, item)
 		else
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHands"):FindChild("ItemLabelHands"):GetText() ~= nil then
-				if currPreviewedItems["Hands"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Hands"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Hands"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHands"):FindChild("ItemLabelHands"):SetText("")
-				self.DyeButtons["Hands"][1]:SetCheck(false)
-				self.DyeButtons["Hands"][2]:SetCheck(false)
-				self.DyeButtons["Hands"][3]:SetCheck(false)
-				self.DyeButtons["Hands"][1]:SetData(nil)
-				self.DyeButtons["Hands"][2]:SetData(nil)
-				self.DyeButtons["Hands"][3]:SetData(nil)
-				self.DyeButtons["Hands"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Hands"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Hands"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
 			if self.wndDyeHands:IsShown() then
 				self.wndDyeHands:Show(false)
 			end
-			currPreviewedItems["Hands"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoHands"):FindChild("ItemLabelHands"):SetText(strItem)
 		end
 	elseif ktVisibleSlots[5] == item:GetSlot() then
+        self:ResetDisplayedItem("Legs", item)
+
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoLegs"):FindChild("ItemLabelLegs"):GetText() ~= nil then
-				if currPreviewedItems["Legs"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Legs"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Legs"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoLegs"):FindChild("ItemLabelLegs"):SetText("")
-				self.DyeButtons["Legs"][1]:SetCheck(false)
-				self.DyeButtons["Legs"][2]:SetCheck(false)
-				self.DyeButtons["Legs"][3]:SetCheck(false)
-				self.DyeButtons["Legs"][1]:SetData(nil)
-				self.DyeButtons["Legs"][2]:SetData(nil)
-				self.DyeButtons["Legs"][3]:SetData(nil)
-				self.DyeButtons["Legs"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Legs"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Legs"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			currPreviewedItems["Legs"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoLegs"):FindChild("ItemLabelLegs"):SetText(strItem)
-			local dyeChannels = item:GetAvailableDyeChannel()
-			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
-				self.wndDyeLegs:Show(false)
-			else
-				self.wndDyeLegs:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
-				self.wndDyeLegs:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
-				self.wndDyeLegs:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
-				self.wndDyeLegs:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeLegs:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeLegs:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeLegs:Show(true)
-			end
+			self:ToggleDyeWindows(self.wndDyeLegs, item)
 		else
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoLegs"):FindChild("ItemLabelLegs"):GetText() ~= nil then
-				if currPreviewedItems["Legs"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Legs"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Legs"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoLegs"):FindChild("ItemLabelLegs"):SetText("")
-				self.DyeButtons["Legs"][1]:SetCheck(false)
-				self.DyeButtons["Legs"][2]:SetCheck(false)
-				self.DyeButtons["Legs"][3]:SetCheck(false)
-				self.DyeButtons["Legs"][1]:SetData(nil)
-				self.DyeButtons["Legs"][2]:SetData(nil)
-				self.DyeButtons["Legs"][3]:SetData(nil)
-				self.DyeButtons["Legs"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Legs"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Legs"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
 			if self.wndDyeLegs:IsShown() then
 				self.wndDyeLegs:Show(false)
 			end
-			currPreviewedItems["Legs"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoLegs"):FindChild("ItemLabelLegs"):SetText(strItem)
 		end
 	elseif ktVisibleSlots[6] == item:GetSlot() then
+        self:ResetDisplayedItem("Feet", item)
+
 		if item:isInstance() then
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoFeet"):FindChild("ItemLabelFeet"):GetText() ~= nil then
-				if currPreviewedItems["Feet"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Feet"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Feet"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoFeet"):FindChild("ItemLabelFeet"):SetText("")
-				self.DyeButtons["Feet"][1]:SetCheck(false)
-				self.DyeButtons["Feet"][2]:SetCheck(false)
-				self.DyeButtons["Feet"][3]:SetCheck(false)
-				self.DyeButtons["Feet"][1]:SetData(nil)
-				self.DyeButtons["Feet"][2]:SetData(nil)
-				self.DyeButtons["Feet"][3]:SetData(nil)
-				self.DyeButtons["Feet"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Feet"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Feet"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
-			currPreviewedItems["Feet"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoFeet"):FindChild("ItemLabelFeet"):SetText(strItem)
-			local dyeChannels = item:GetAvailableDyeChannel()
-			if not dyeChannels["bDyeChannel1"] and not dyeChannels["bDyeChannel2"] and not dyeChannels["bDyeChannel3"] then
-				self.wndDyeFeet:Show(false)
-			else
-				self.wndDyeFeet:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1"):Show(dyeChannels["bDyeChannel1"])
-				self.wndDyeFeet:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2"):Show(dyeChannels["bDyeChannel2"])
-				self.wndDyeFeet:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3"):Show(dyeChannels["bDyeChannel3"])
-				self.wndDyeFeet:FindChild("CostumeEntryForm:DyeColor1Container:DyeColor1:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeFeet:FindChild("CostumeEntryForm:DyeColor2Container:DyeColor2:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeFeet:FindChild("CostumeEntryForm:DyeColor3Container:DyeColor3:DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.wndDyeFeet:Show(true)
-			end
+			self:ToggleDyeWindows(self.wndDyeFeet, item)
 		else
-			if self.wndMain:FindChild("PreviewInformation"):FindChild("InfoFeet"):FindChild("ItemLabelFeet"):GetText() ~= nil then
-				if currPreviewedItems["Feet"] ~= nil then
-					self.tSelectedItems[currPreviewedItems["Feet"]:GetItemId()] = nil
-				end
-				currPreviewedItems["Feet"] = nil
-				self.wndMain:FindChild("PreviewInformation"):FindChild("InfoFeet"):FindChild("ItemLabelFeet"):SetText("")
-				self.DyeButtons["Feet"][1]:SetCheck(false)
-				self.DyeButtons["Feet"][2]:SetCheck(false)
-				self.DyeButtons["Feet"][3]:SetCheck(false)
-				self.DyeButtons["Feet"][1]:SetData(nil)
-				self.DyeButtons["Feet"][2]:SetData(nil)
-				self.DyeButtons["Feet"][3]:SetData(nil)
-				self.DyeButtons["Feet"][1]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Feet"][2]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-				self.DyeButtons["Feet"][3]:FindChild("DyeSwatchArtHack:DyeSwatch"):Show(false)
-			end
 			if self.wndDyeFeet:IsShown() then
 				self.wndDyeFeet:Show(false)
 			end
-			currPreviewedItems["Feet"] = item
-			self.wndMain:FindChild("PreviewInformation"):FindChild("InfoFeet"):FindChild("ItemLabelFeet"):SetText(strItem)
 		end
 	elseif ktVisibleSlots[7] == item:GetSlot() then
-		self.wndMain:FindChild("PreviewInformation"):FindChild("InfoWeapon"):FindChild("ItemLabelWeapon"):SetText(strItem)
-		currPreviewedItems["Weapon"] = item
+		self:ResetDisplayedItem("Weapon", item)
 	end
 
 	-- set sheathed or not
