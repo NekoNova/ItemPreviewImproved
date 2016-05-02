@@ -816,6 +816,8 @@ function ItemPreviewImproved:ResetItemWindow(strSlot)
 
 	self.wndMain:FindChild("PreviewInformation"):FindChild("Info"..strSlot):FindChild("ItemLabel"..strSlot):SetText("")
 
+	if strSlot == "Weapon" then return end	-- No need to configure Dye's for weapons
+
 	for i = 1, 3, 1 do
 		self.DyeButtons[strSlot][i]:SetCheck(false)
 		self.DyeButtons[strSlot][i]:SetData(nil)
