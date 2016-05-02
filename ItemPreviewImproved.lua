@@ -31,7 +31,7 @@ local karCostumeSlotNames = -- string name, then id, then button art
 	{ "Legs", GameLib.CodeEnumItemSlots.Legs, "CharacterWindowSprites:btnCh_Armor_Legs", 2 },
 	{ "Feet", GameLib.CodeEnumItemSlots.Feet, "CharacterWindowSprites:btnCh_Armor_Feet", 5 }
 }
-local knNumCostumes = 10
+local knNumCostumes = CostumesLib.GetCostumeCount()
 local PrevSlot = {
 	"Head",
 	"Shoulder",
